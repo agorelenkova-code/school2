@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Диагноз: Онлайн-школа «Ромашка»</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --bg:#07080c;
+  --surface:#0d0f15;
+  --surface2:#13151e;
+  --border:rgba(255,255,255,0.07);
+  --border2:rgba(255,255,255,0.12);
+  --red:#e63946;
+  --red-glow:rgba(230,57,70,0.18);
+  --red-line:rgba(230,57,70,0.35);
+  --amber:#f4a261;
+  --amber-glow:rgba(244,162,97,0.15);
+  --amber-line:rgba(244,162,97,0.35);
+  --green:#2ec4b6;
+  --green-glow:rgba(46,196,182,0.13);
+  --green-line:rgba(46,196,182,0.35);
+  --text:#dde1ed;
+  --dim:rgba(221,225,237,0.45);
+  --dim2:rgba(221,225,237,0.25);
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Inter',sans-serif;
+}
+
+html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);overflow:hidden;user-select:none}
+
+/* ─── Canvas bg ─── */
+#bg{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+/* ─── Slides ─── */
+#deck{position:fixed;inset:0;z-index:1}
+
+.slide{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  padding:52px 80px;
+  opacity:0;pointer-events:none;
+  transition:opacity .55s cubic-bezier(.4,0,.2,1),transform .55s cubic-bezier(.4,0,.2,1);
+  transform:translateY(24px);
+}
+.slide.active{opacity:1;pointer-events:all;transform:translateY(0)}
+.slide.out{opacity:0;transform:translateY(-24px)}
+
+/* ─── Nav dots ─── */
+#dots{
+  position:fixed;right:24px;top:50%;transform:translateY(-50%);
+  display:flex;flex-direction:column;gap:9px;z-index:10;
+}
+.dot{
+  width:5px;height:5px;border-radius:50%;
+  background:rgba(255,255,255,0.15);
+  border:1px solid rgba(255,255,255,0.2);
+  cursor:pointer;transition:all .3s;
+}
+.dot.on{background:var(--text);transform:scale(1.5)}
+
+#pg{
+  position:fixed;bottom:24px;right:28px;
+  font-family:var(--mono);font-size:10px;color:var(--dim2);
+  letter-spacing:.1em;z-index:10;
+}
+
+/* ─── Chips / tags ─── */
+.chip{
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  padding:4px 10px;border-radius:4px;
+}
+.chip.red{color:var(--red);background:var(--red-glow);border:1px solid var(--red-line)}
+.chip.amber{color:var(--amber);background:var(--amber-glow);border:1px solid var(--amber-line)}
+.chip.green{color:var(--green);background:var(--green-glow);border:1px solid var(--green-line)}
+.chip.muted{color:var(--dim);background:rgba(255,255,255,0.04);border:1px solid var(--border2)}
+
+/* ─── Generic helpers ─── */
+.col{display:flex;flex-direction:column}
+.row{display:flex;align-items:center}
+.gap4{gap:4px}.gap8{gap:8px}.gap12{gap:12px}.gap16{gap:16px}.gap20{gap:20px}.gap24{gap:24px}.gap32{gap:32px}.gap40{gap:40px}.gap48{gap:48px}
+.w100{width:100%}
+.mono{font-family:var(--mono)}
+.dim{color:var(--dim)}
+.dim2{color:var(--dim2)}
+
+/* ─── Divider ─── */
+.divider{height:1px;background:var(--border);width:100%}
+
+/* ─── Quote block ─── */
+.quote{
+  padding:14px 18px 14px 16px;
+  border-left:3px solid var(--amber-line);
+  background:var(--amber-glow);
+  border-radius:0 8px 8px 0;
+  font-size:13px;color:rgba(221,225,237,.8);
+  line-height:1.65;font-style:italic;
+}
+.quote-src{font-style:normal;font-family:var(--mono);font-size:10px;color:var(--dim2);margin-top:5px;display:block}
+
+/* ══════════════════════════════
+   SLIDE 1 — OPENING
+══════════════════════════════ */
+#s1{flex-direction:column;align-items:flex-start}
+
+.s1-kicker{display:flex;align-items:center;gap:10px;margin-bottom:28px}
+
+.s1-title{
+  font-size:clamp(60px,8vw,108px);
+  font-weight:900;line-height:.92;letter-spacing:-.04em;
+  margin-bottom:32px;
+}
+.s1-title em{font-style:normal;color:var(--red)}
+
+.s1-sub{
+  font-size:16px;color:var(--dim);font-weight:400;
+  max-width:460px;line-height:1.7;margin-bottom:44px;
+}
+
+.s1-stats{display:flex;gap:36px}
+.s1-stat{display:flex;flex-direction:column;gap:3px}
+.s1-stat-n{font-size:38px;font-weight:900;letter-spacing:-.03em;line-height:1}
+.s1-stat-n.r{color:var(--red)}
+.s1-stat-n.a{color:var(--amber)}
+.s1-stat-l{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim2)}
+
+/* ══════════════════════════════
+   SLIDE 2 — CHAIN
+══════════════════════════════ */
+#s2{flex-direction:column;align-items:flex-start;gap:0}
+
+.s2-head{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.s2-title{font-size:clamp(30px,3.8vw,48px);font-weight:800;letter-spacing:-.025em;line-height:1.1}
+
+.chain-wrap{display:flex;align-items:stretch;width:100%;margin-bottom:16px}
+
+.cnode{
+  flex:1;
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:16px 14px;text-align:center;cursor:pointer;
+  transition:all .25s;display:flex;flex-direction:column;align-items:center;gap:6px;
+}
+.cnode:hover,.cnode.sel{border-color:var(--red-line);background:var(--red-glow);transform:translateY(-2px)}
+.cnode-ico{font-size:20px}
+.cnode-name{font-size:12px;font-weight:700;color:var(--text)}
+.cnode-wait{font-family:var(--mono);font-size:9px;color:var(--red);letter-spacing:.06em}
+
+.carrow{
+  width:36px;flex-shrink:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+}
+.carrow-ico{color:var(--red);font-size:16px}
+.carrow-lbl{font-family:var(--mono);font-size:8px;color:var(--dim2);letter-spacing:.06em;white-space:nowrap}
+
+.cdetail{
+  width:100%;padding:14px 18px;
+  background:var(--red-glow);border:1px solid var(--red-line);border-radius:8px;
+  font-size:13px;color:rgba(221,225,237,.85);line-height:1.6;
+  min-height:52px;transition:all .3s;
+}
+
+.s2-footer{display:flex;gap:20px;margin-top:12px;flex-wrap:wrap}
+.s2-pill{
+  display:flex;align-items:center;gap:6px;
+  font-size:12px;color:var(--dim);
+}
+.s2-pill-dot{width:5px;height:5px;border-radius:50%;background:var(--red);flex-shrink:0}
+
+/* ══════════════════════════════
+   SLIDE 3 — TELEPHONE
+══════════════════════════════ */
+#s3{flex-direction:column;align-items:flex-start;gap:0}
+
+.s3-head{margin-bottom:16px}
+.s3-title{font-size:clamp(30px,3.8vw,48px);font-weight:800;letter-spacing:-.025em;line-height:1.1}
+
+.tline{width:100%;display:flex;flex-direction:column}
+.tevent{
+  display:grid;grid-template-columns:52px 90px 1fr auto;
+  align-items:start;gap:12px;
+  padding:10px 0;border-bottom:1px solid var(--border);
+  opacity:0;transform:translateX(-12px);
+  transition:opacity .4s ease,transform .4s ease;
+}
+.tevent.shown{opacity:1;transform:translateX(0)}
+.te-date{font-family:var(--mono);font-size:10px;color:var(--dim2);padding-top:2px}
+.te-who{font-size:12px;font-weight:700;color:var(--text);padding-top:2px}
+.te-what{font-size:13px;color:var(--dim);line-height:1.5}
+.te-what strong{color:var(--text)}
+.te-tag{
+  font-family:var(--mono);font-size:9px;padding:3px 8px;
+  border-radius:4px;white-space:nowrap;align-self:flex-start;letter-spacing:.05em;
+}
+.tag-ok{background:var(--green-glow);color:var(--green);border:1px solid var(--green-line)}
+.tag-warn{background:var(--amber-glow);color:var(--amber);border:1px solid var(--amber-line)}
+.tag-bad{background:var(--red-glow);color:var(--red);border:1px solid var(--red-line)}
+
+.reveal-btn{
+  margin-top:12px;
+  background:transparent;border:1px solid var(--border2);border-radius:6px;
+  color:var(--dim);font-family:var(--mono);font-size:10px;
+  padding:7px 16px;cursor:pointer;transition:all .2s;letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.reveal-btn:hover{border-color:var(--amber-line);color:var(--amber);background:var(--amber-glow)}
+.reveal-btn:disabled{opacity:0;pointer-events:none}
+
+/* ══════════════════════════════
+   SLIDE 4 — BOTTLENECK
+══════════════════════════════ */
+#s4{gap:48px;align-items:flex-start}
+
+.s4-l{flex:1;display:flex;flex-direction:column;gap:18px}
+.s4-r{width:310px;flex-shrink:0;display:flex;flex-direction:column;gap:10px}
+
+.wi{
+  background:var(--surface);border:1px solid var(--border);
+  border-left:3px solid var(--amber-line);
+  border-radius:0 9px 9px 0;
+  padding:13px 50px 13px 14px;
+  position:relative;transition:border-color .2s;
+}
+.wi:hover{border-color:var(--amber-line);border-left-color:var(--amber)}
+.wi-t{font-size:13px;font-weight:700;margin-bottom:2px}
+.wi-m{font-family:var(--mono);font-size:9px;color:var(--dim2);letter-spacing:.05em}
+.wi-d{
+  position:absolute;right:14px;top:50%;transform:translateY(-50%);
+  font-family:var(--mono);font-size:17px;font-weight:700;color:var(--amber);
+}
+
+/* ══════════════════════════════
+   SLIDE 5 — COST
+══════════════════════════════ */
+#s5{flex-direction:column;align-items:flex-start;gap:28px}
+
+.cost-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:100%}
+.ccard{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:22px 20px;display:flex;flex-direction:column;gap:8px;
+  transition:border-color .25s;cursor:default;
+}
+.ccard:hover{border-color:var(--red-line)}
+.ccard-ico{font-size:22px}
+.ccard-num{
+  font-size:clamp(28px,3.2vw,42px);font-weight:900;
+  letter-spacing:-.03em;line-height:1;color:var(--red);
+}
+.ccard-unit{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim2)}
+.ccard-desc{font-size:12px;color:var(--dim);line-height:1.55;border-top:1px solid var(--border);padding-top:9px;margin-top:3px}
+
+.cost-bar{
+  display:flex;gap:24px;align-items:flex-start;
+  padding:18px 22px;background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;width:100%;
+}
+.cb-label{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim2);flex-shrink:0;padding-top:2px}
+.cb-text{font-size:13px;color:rgba(221,225,237,.8);line-height:1.65}
+
+/* ══════════════════════════════
+   SLIDE 6 — SOLUTIONS
+══════════════════════════════ */
+#s6{gap:52px;align-items:flex-start}
+
+.s6-l{flex:1;display:flex;flex-direction:column;gap:18px}
+.s6-r{flex:1;display:flex;flex-direction:column;gap:10px}
+
+.sol{
+  display:flex;gap:14px;align-items:flex-start;
+  padding:15px 18px;background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;transition:all .25s;cursor:default;
+}
+.sol:hover{border-color:var(--green-line);background:var(--green-glow);transform:translateX(4px)}
+.sol-n{
+  font-family:var(--mono);font-size:11px;font-weight:700;
+  color:var(--green);width:22px;flex-shrink:0;padding-top:1px;
+}
+.sol-body{flex:1}
+.sol-t{font-size:14px;font-weight:700;margin-bottom:4px}
+.sol-d{font-size:12px;color:var(--dim);line-height:1.55}
+.sol-tag{
+  font-family:var(--mono);font-size:9px;padding:3px 8px;
+  background:var(--green-glow);color:var(--green);
+  border:1px solid var(--green-line);border-radius:4px;
+  white-space:nowrap;flex-shrink:0;align-self:flex-start;
+}
+
+</style>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+
+<div id="deck">
+
+  <!-- ─── SLIDE 1 ─── -->
+  <div class="slide active" id="s1">
+    <div class="s1-kicker">
+      <span class="chip red">Аналитика созвонов</span>
+      <span class="chip muted">5–15 мая 2026 · 9 встреч</span>
+    </div>
+    <h1 class="s1-title">Где теряет<br><em>«Ромашка»</em></h1>
+    <p class="s1-sub">Три системные проблемы, которые тормозят команду накануне летнего набора — и стоят реальных денег.</p>
+    <div class="s1-stats">
+      <div class="s1-stat">
+        <span class="s1-stat-n">9</span>
+        <span class="s1-stat-l">созвонов</span>
+      </div>
+      <div class="s1-stat">
+        <span class="s1-stat-n">11</span>
+        <span class="s1-stat-l">дней</span>
+      </div>
+      <div class="s1-stat">
+        <span class="s1-stat-n r">3</span>
+        <span class="s1-stat-l">проблемы</span>
+      </div>
+      <div class="s1-stat">
+        <span class="s1-stat-n a">≥600К ₽</span>
+        <span class="s1-stat-l">потенц. потери за лето</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── SLIDE 2: Chain ─── -->
+  <div class="slide" id="s2">
+    <div class="s2-head">
+      <span class="chip red">Проблема №1 · 7 из 9 созвонов</span>
+      <h2 class="s2-title">Замкнутый круг<br>в маркетинге</h2>
+      <span style="font-size:12px;color:var(--dim2)">Нажмите на блок, чтобы узнать подробнее</span>
+    </div>
+
+    <div class="chain-wrap" id="chain">
+      <div class="cnode" data-i="0" onclick="pickNode(0)">
+        <div class="cnode-ico">🎯</div>
+        <div class="cnode-name">Лендинг</div>
+        <div class="cnode-wait">ждёт контент</div>
+      </div>
+      <div class="carrow"><div class="carrow-ico">→</div><div class="carrow-lbl">блокирует</div></div>
+      <div class="cnode" data-i="1" onclick="pickNode(1)">
+        <div class="cnode-ico">✍️</div>
+        <div class="cnode-name">Описания</div>
+        <div class="cnode-wait">ждут цены</div>
+      </div>
+      <div class="carrow"><div class="carrow-ico">→</div><div class="carrow-lbl">блокирует</div></div>
+      <div class="cnode" data-i="2" onclick="pickNode(2)">
+        <div class="cnode-ico">💰</div>
+        <div class="cnode-name">Цены</div>
+        <div class="cnode-wait">ждут лендинг</div>
+      </div>
+      <div class="carrow"><div class="carrow-ico">→</div><div class="carrow-lbl">блокирует</div></div>
+      <div class="cnode" data-i="3" onclick="pickNode(3)">
+        <div class="cnode-ico">📢</div>
+        <div class="cnode-name">Реклама</div>
+        <div class="cnode-wait">ждёт лендинг</div>
+      </div>
+    </div>
+
+    <div class="cdetail" id="cdetail">← Выберите блок в цепочке выше</div>
+
+    <div class="s2-footer">
+      <div class="s2-pill"><span class="s2-pill-dot"></span>Алексей 3 недели откладывал описания — «хочу ещё раз проверить»</div>
+      <div class="s2-pill"><span class="s2-pill-dot"></span>Виктор не называл цены без данных конверсии с лендинга</div>
+      <div class="s2-pill"><span class="s2-pill-dot"></span>Конкуренты запустили продажи с 5 мая</div>
+    </div>
+  </div>
+
+  <!-- ─── SLIDE 3: Telephone ─── -->
+  <div class="slide" id="s3">
+    <div class="s3-head">
+      <span class="chip amber" style="margin-bottom:8px;display:inline-flex">Проблема №2 · 8 из 9 созвонов</span>
+      <h2 class="s3-title">Испорченный<br>телефон с датой</h2>
+    </div>
+
+    <div class="tline" id="tline">
+      <div class="tevent shown">
+        <div class="te-date">05.05</div>
+        <div class="te-who">Георгий</div>
+        <div class="te-what">Устанавливает старт — <strong>1 июня</strong>. Подтверждает дважды. «Окончательно.»</div>
+        <div class="te-tag tag-ok">✓ решение</div>
+      </div>
+      <div class="tevent" id="te1">
+        <div class="te-date">07.05</div>
+        <div class="te-who">Даша</div>
+        <div class="te-what">Высказывает <em>предположение</em>: «может, не успеем к 1-му». Алексей: «пока работаем от первого».</div>
+        <div class="te-tag tag-warn">обсуждение</div>
+      </div>
+      <div class="tevent" id="te2">
+        <div class="te-date">08.05</div>
+        <div class="te-who">Даша → Лена</div>
+        <div class="te-what">Неформально: «может, середина июня». Лена перестраивает весь медиаплан под <strong>15 июня</strong>.</div>
+        <div class="te-tag tag-warn">искажение</div>
+      </div>
+      <div class="tevent" id="te3">
+        <div class="te-date">09.05</div>
+        <div class="te-who">Максим → Оля</div>
+        <div class="te-what">Передаёт как <em>факт</em>: «дату сдвинули». Оля расставляет часы преподавателям с 15-го и отправляет документы в <strong>3 партнёрские школы</strong>.</div>
+        <div class="te-tag tag-bad">⚠ ущерб</div>
+      </div>
+      <div class="tevent" id="te4">
+        <div class="te-date">12.05</div>
+        <div class="te-who">Синк</div>
+        <div class="te-what">Скандал. Георгий подтверждает: 1 июня. Оля переделывает всё обратно — неделя работы, испорченные отношения с партнёрами.</div>
+        <div class="te-tag tag-bad">неделя работы</div>
+      </div>
+      <div class="tevent" id="te5">
+        <div class="te-date">15.05</div>
+        <div class="te-who">Кросс-синк</div>
+        <div class="te-what">Скандал повторяется. Лена строила план от 15-го. Алексей уверен в 1-м. <strong>Дата не зафиксирована.</strong></div>
+        <div class="te-tag tag-bad">нет решения</div>
+      </div>
+    </div>
+
+    <button class="reveal-btn" id="rbtn" onclick="revealNext()">Показать дальше →</button>
+  </div>
+
+  <!-- ─── SLIDE 4: Bottleneck ─── -->
+  <div class="slide" id="s4">
+    <div class="s4-l">
+      <div class="col gap8">
+        <span class="chip amber">Проблема №3 · 6 из 9 созвонов</span>
+        <h2 style="font-size:clamp(30px,3.8vw,48px);font-weight:800;letter-spacing:-.025em;line-height:1.1">Директор —<br>бутылочное горлышко</h2>
+      </div>
+      <p style="font-size:14px;color:var(--dim);line-height:1.7;max-width:440px">Три критических решения зависят от Георгия. Он уходит с синков раньше, пишет «к среде» и не отвечает. Команда обсуждает одни вопросы из встречи в встречу — без продвижения.</p>
+      <div class="quote">
+        «Каждый раз ждём Георгия, а он на внешней встрече»
+        <span class="quote-src">— Лена, кросс-командный синк 15 мая</span>
+      </div>
+      <div class="quote">
+        «Предупреди что нам час нужен, а не десять минут на бегу — скажет "разберётесь" и убежит»
+        <span class="quote-src">— Виктор, кросс-командный синк 15 мая</span>
+      </div>
+    </div>
+    <div class="s4-r">
+      <div style="font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim2);margin-bottom:4px">Ждут решения Георгия</div>
+      <div class="wi">
+        <div class="wi-t">Бюджет на рекламу</div>
+        <div class="wi-m">200 000 ₽ · Лена ждёт с 5 мая</div>
+        <div class="wi-d">10д+</div>
+      </div>
+      <div class="wi">
+        <div class="wi-t">Дата запуска</div>
+        <div class="wi-m">1 июня vs 15 июня · нет письменного ответа</div>
+        <div class="wi-d">10д+</div>
+      </div>
+      <div class="wi">
+        <div class="wi-t">Бюджет на найм</div>
+        <div class="wi-m">~270 000 ₽/мес. · Виктор делает офферы без одобрения</div>
+        <div class="wi-d">7д+</div>
+      </div>
+      <div class="wi">
+        <div class="wi-t">Летний интенсив</div>
+        <div class="wi-m">Георгий инициировал, ответственный не назначен</div>
+        <div class="wi-d">7д+</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── SLIDE 5: Cost ─── -->
+  <div class="slide" id="s5">
+    <div class="col gap4" style="margin-bottom:24px">
+      <span class="chip red">Цена промедления</span>
+      <h2 style="font-size:clamp(30px,3.8vw,48px);font-weight:800;letter-spacing:-.025em;line-height:1.1">Что это стоит команде</h2>
+    </div>
+    <div class="cost-grid">
+      <div class="ccard">
+        <div class="ccard-ico">📉</div>
+        <div class="ccard-num">≥600К</div>
+        <div class="ccard-unit">рублей / лето</div>
+        <div class="ccard-desc">В прошлом году: 80 необработанных заявок в месяц × 20% конверсия × 12 000 ₽ чек. Без людей в продажах — история повторится.</div>
+      </div>
+      <div class="ccard">
+        <div class="ccard-ico">⏱</div>
+        <div class="ccard-num">&lt;10</div>
+        <div class="ccard-unit">дней активной рекламы</div>
+        <div class="ccard-desc">Если лендинг к 21 мая — алгоритмам не хватит времени прогреться до 1 июня. Нужно минимум 2–3 недели. Этого времени уже нет.</div>
+      </div>
+      <div class="ccard">
+        <div class="ccard-ico">🤝</div>
+        <div class="ccard-num">3</div>
+        <div class="ccard-unit">партнёра под ударом</div>
+        <div class="ccard-desc">Три партнёрские школы получили документы с неверной датой и уже подтвердили 15 июня. Приходится перезванивать и объяснять.</div>
+      </div>
+    </div>
+    <div class="cost-bar">
+      <div class="cb-label">Контекст</div>
+      <div class="cb-text">Лето — <strong>40% годовой выручки</strong> «Ромашки». Конкуренты («Школа будущего», «Солнечная долина») уже продают с ранним бронированием. Каждая неделя промедления сужает окно набора и отдаёт клиентов конкурентам.</div>
+    </div>
+  </div>
+
+  <!-- ─── SLIDE 6: Solutions ─── -->
+  <div class="slide" id="s6">
+    <div class="s6-l">
+      <div class="col gap8">
+        <span class="chip green">Что делать</span>
+        <h2 style="font-size:clamp(30px,3.8vw,48px);font-weight:800;letter-spacing:-.025em;line-height:1.1">3 точки<br>приложения сил</h2>
+      </div>
+      <p style="font-size:14px;color:var(--dim);line-height:1.7;max-width:400px">Все три проблемы решаются структурными изменениями — без найма и дополнительных расходов.</p>
+      <div style="padding:15px 18px;background:var(--green-glow);border:1px solid var(--green-line);border-radius:8px;font-size:13px;color:rgba(221,225,237,.85);line-height:1.65">
+        Даша уже предложила первый шаг: <strong style="color:var(--green)">организовать 1 час с Георгием с конкретной повесткой</strong> — дата, бюджет рекламы, интенсив. Нужно сделать это на этой неделе.
+      </div>
+      <div style="font-size:12px;color:var(--dim2);line-height:1.6;max-width:400px">
+        Хватит двух недель, чтобы разблокировать маркетинг и выйти на лендинг к 21 мая. Но для этого все три проблемы должны решиться параллельно.
+      </div>
+    </div>
+    <div class="s6-r">
+      <div class="sol">
+        <div class="sol-n">01</div>
+        <div class="sol-body">
+          <div class="sol-t">Разорвать цепочку зависимостей</div>
+          <div class="sol-d">Зафиксировать рабочие цены (Виктор озвучил 4500/6500/9000) и передать в маркетинг. Не ждать «финальных» — цену на лендинге меняют за час. Алексей уже отправил описания 15 мая.</div>
+        </div>
+        <div class="sol-tag">Лендинг к 21 мая</div>
+      </div>
+      <div class="sol">
+        <div class="sol-n">02</div>
+        <div class="sol-body">
+          <div class="sol-t">Зафиксировать дату письменно</div>
+          <div class="sol-d">Одно сообщение от Георгия в общий чат: «дата запуска — X июня, окончательно». Устные подтверждения не работают — команда уже дважды ошиблась в интерпретации.</div>
+        </div>
+        <div class="sol-tag">Снимает путаницу</div>
+      </div>
+      <div class="sol">
+        <div class="sol-n">03</div>
+        <div class="sol-body">
+          <div class="sol-t">Делегировать право на решения</div>
+          <div class="sol-d">Определить, кто может закрывать операционные вопросы без Георгия. Например: бюджеты до 50К — без согласования. Решения выше — 24 часа на ответ, иначе авто-одобрение.</div>
+        </div>
+        <div class="sol-tag">Снимает блокеры</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Nav -->
+<div id="dots"></div>
+<div id="pg">1 / 6</div>
+
+<script>
+// ── State ──
+const TOTAL = 6;
+let cur = 0;
+let phoneIdx = 1;
+
+// ── Chain data ──
+const CD = [
+  '<strong>Лена (маркетинг)</strong> — ждёт тексты с конца апреля. На 15 мая дизайн готов, но блоки с контентом пустые. Без лендинга нет трафика, без трафика нет заявок.',
+  '<strong>Алексей (продукт)</strong> — три недели откладывал: перфекционизм + ждал цен от Виктора. Логика «не хочу переделывать потом» парализовала всю цепочку. 15 мая наконец отправил 4 из 5 описаний.',
+  '<strong>Виктор (продажи)</strong> — отказывался называть цены без данных конверсии с лендинга. Кольцо: нет лендинга без цен → нет цен без лендинга. 15 мая под давлением назвал рабочие цифры.',
+  '<strong>Рекламная кампания</strong> — полностью заблокирована. Алгоритмам нужно 2–3 недели прогрева. Если лендинг появится 21 мая — до 1 июня меньше 10 дней активной рекламы.'
+];
+
+// ── Navigate ──
+function goTo(i) {
+  const slides = document.querySelectorAll('.slide');
+  slides[cur].classList.remove('active');
+  slides[cur].classList.add('out');
+  const prev = cur;
+  setTimeout(() => slides[prev].classList.remove('out'), 600);
+  cur = i;
+  slides[cur].classList.add('active');
+  updateUI();
+}
+
+function updateUI() {
+  document.querySelectorAll('.dot').forEach((d,i) => d.classList.toggle('on', i === cur));
+  document.getElementById('pg').textContent = `${cur+1} / ${TOTAL}`;
+}
+
+// ── Keys ──
+document.addEventListener('keydown', e => {
+  if (['ArrowRight','ArrowDown',' '].includes(e.key)) { if(cur<TOTAL-1) goTo(cur+1); e.preventDefault(); }
+  if (['ArrowLeft','ArrowUp'].includes(e.key)) { if(cur>0) goTo(cur-1); e.preventDefault(); }
+});
+
+// ── Touch ──
+let tx = 0;
+document.addEventListener('touchstart', e => tx = e.touches[0].clientX);
+document.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (dx < -50 && cur < TOTAL-1) goTo(cur+1);
+  if (dx > 50 && cur > 0) goTo(cur-1);
+});
+
+// ── Build dots ──
+const dotsEl = document.getElementById('dots');
+for (let i=0;i<TOTAL;i++) {
+  const d = document.createElement('div');
+  d.className = 'dot' + (i===0?' on':'');
+  d.onclick = () => goTo(i);
+  dotsEl.appendChild(d);
+}
+
+// ── Chain ──
+function pickNode(i) {
+  document.querySelectorAll('.cnode').forEach((n,j) => n.classList.toggle('sel', j===i));
+  document.getElementById('cdetail').innerHTML = CD[i];
+}
+
+// ── Phone reveal ──
+const phoneIds = ['te1','te2','te3','te4','te5'];
+function revealNext() {
+  if (phoneIdx < phoneIds.length) {
+    document.getElementById(phoneIds[phoneIdx]).classList.add('shown');
+    phoneIdx++;
+    if (phoneIdx >= phoneIds.length) document.getElementById('rbtn').disabled = true;
+  }
+}
+
+// ── Background grid ──
+const cv = document.getElementById('bg');
+const cx = cv.getContext('2d');
+function resize() {
+  cv.width = innerWidth; cv.height = innerHeight;
+  cx.clearRect(0,0,cv.width,cv.height);
+  const s = 44;
+  cx.fillStyle = 'rgba(255,255,255,0.18)';
+  for (let x=0; x<cv.width; x+=s)
+    for (let y=0; y<cv.height; y+=s) {
+      cx.beginPath(); cx.arc(x,y,.7,0,Math.PI*2); cx.fill();
+    }
+}
+resize();
+window.addEventListener('resize', resize);
+</script>
+</body>
+</html>
