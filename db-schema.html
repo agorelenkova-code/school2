@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>DB Schema — Ромашка</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#08090e;font-family:'Inter',sans-serif;color:#f1f5f9;min-height:100vh;padding:32px 40px 60px}
+
+h1{font-size:22px;font-weight:800;color:#f1f5f9;margin-bottom:4px;letter-spacing:-.02em}
+.subtitle{font-size:13px;color:#475569;margin-bottom:28px;font-family:'JetBrains Mono',monospace}
+
+/* ── CANVAS ── */
+#canvas{position:relative;width:1060px;height:830px;margin:0 auto}
+#svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+
+/* ── TABLE CARDS ── */
+.tbl{
+  position:absolute;
+  width:210px;
+  background:#0d0e16;
+  border-radius:10px;
+  border:1.5px solid #1c1e2a;
+  overflow:hidden;
+  box-shadow:0 4px 24px rgba(0,0,0,.4);
+  transition:box-shadow .2s, transform .2s;
+}
+.tbl:hover{
+  box-shadow:0 8px 32px rgba(0,0,0,.6);
+  transform:translateY(-2px);
+  z-index:10;
+}
+.th{
+  padding:10px 14px 8px;
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:.01em;
+  display:flex;flex-direction:column;gap:2px;
+}
+.th-name{font-size:14px;font-weight:800}
+.th-desc{font-size:10px;opacity:.75;font-weight:500}
+
+.fd{
+  display:flex;align-items:center;gap:7px;
+  padding:0 12px;height:24px;
+  font-size:11.5px;border-top:1px solid #1c1e2a;
+  white-space:nowrap;overflow:hidden;
+}
+.fd-icon{font-size:10px;flex-shrink:0;width:13px;text-align:center}
+.fd-name{flex:1;color:#cbd5e1;font-family:'JetBrains Mono',monospace;font-size:11px}
+.fd.pk .fd-name{color:#f1f5f9;font-weight:600}
+.fd.fk .fd-name{color:#94a3b8}
+.fd-type{font-family:'JetBrains Mono',monospace;font-size:10px;color:#334155;flex-shrink:0}
+.fd.pk .fd-type{color:#475569}
+
+/* color variants */
+.tbl-purple .th{background:linear-gradient(135deg,#581c87,#6b21a8);color:#e9d5ff}
+.tbl-blue   .th{background:linear-gradient(135deg,#1e3a8a,#1d4ed8);color:#bfdbfe}
+.tbl-green  .th{background:linear-gradient(135deg,#14532d,#15803d);color:#bbf7d0}
+.tbl-amber  .th{background:linear-gradient(135deg,#78350f,#b45309);color:#fde68a}
+.tbl-rose   .th{background:linear-gradient(135deg,#881337,#be123c);color:#fecdd3}
+.tbl-teal   .th{background:linear-gradient(135deg,#134e4a,#0f766e);color:#99f6e4}
+
+.tbl-purple{border-color:#581c87}
+.tbl-blue  {border-color:#1e3a8a}
+.tbl-green {border-color:#14532d}
+.tbl-amber {border-color:#78350f}
+.tbl-rose  {border-color:#881337}
+.tbl-teal  {border-color:#134e4a}
+
+.tbl-purple:hover{box-shadow:0 8px 32px rgba(168,85,247,.2)}
+.tbl-blue:hover  {box-shadow:0 8px 32px rgba(59,130,246,.2)}
+.tbl-green:hover {box-shadow:0 8px 32px rgba(34,197,94,.2)}
+.tbl-amber:hover {box-shadow:0 8px 32px rgba(245,158,11,.2)}
+.tbl-rose:hover  {box-shadow:0 8px 32px rgba(244,63,94,.2)}
+.tbl-teal:hover  {box-shadow:0 8px 32px rgba(20,184,166,.2)}
+
+/* ── LEGEND ── */
+.legend{
+  position:absolute;bottom:0;right:0;
+  background:#0d0e16;border:1px solid #1c1e2a;border-radius:8px;
+  padding:12px 16px;font-size:11px;color:#64748b;
+  display:flex;flex-direction:column;gap:6px;
+}
+.legend-row{display:flex;align-items:center;gap:8px}
+.leg-line{width:28px;height:2px;background:#475569;border-radius:1px}
+.leg-circle{width:8px;height:8px;border-radius:50%;border:2px solid #475569;flex-shrink:0}
+
+/* ── COUNT BADGES ── */
+.badge{
+  display:inline-block;font-family:'JetBrains Mono',monospace;font-size:9px;
+  padding:1px 5px;border-radius:3px;font-weight:600;
+  background:rgba(255,255,255,.06);color:#64748b;
+  float:right;margin-top:1px;
+}
+</style>
+</head>
+<body>
+
+<h1>Схема базы данных</h1>
+<div class="subtitle">Онлайн-школа «Ромашка» · 6 таблиц · Metabase · апрель 2026</div>
+
+<div id="canvas">
+<svg id="svg">
+  <defs>
+    <!-- arrowhead для FK-конца -->
+    <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#334155"/>
+    </marker>
+    <!-- circle для PK-конца (один) -->
+    <marker id="one" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+      <circle cx="4" cy="4" r="3" fill="none" stroke="#334155" stroke-width="1.5"/>
+    </marker>
+    <!-- crow's foot для FK-конца (много) -->
+    <marker id="many" markerWidth="10" markerHeight="8" refX="1" refY="4" orient="auto">
+      <path d="M8,1 L1,4 L8,7 M8,4 L1,4" fill="none" stroke="#334155" stroke-width="1.5"/>
+    </marker>
+  </defs>
+
+  <!-- ── Path 1: teachers.id → students.homeroom_teacher_id ── -->
+  <path d="M 445,82 C 350,82 350,458 260,458"
+        fill="none" stroke="#334155" stroke-width="1.5"
+        marker-start="url(#one)" marker-end="url(#many)"/>
+  <text x="374" y="270" font-family="JetBrains Mono,monospace" font-size="10" fill="#475569"
+        transform="rotate(-68,374,270)">homeroom_teacher_id</text>
+
+  <!-- ── Path 2: teachers.id → courses.teacher_id ── -->
+  <path d="M 655,82 C 722,82 722,290 790,290"
+        fill="none" stroke="#334155" stroke-width="1.5"
+        marker-start="url(#one)" marker-end="url(#many)"/>
+  <text x="718" y="180" font-family="JetBrains Mono,monospace" font-size="10" fill="#475569"
+        transform="rotate(60,718,180)">teacher_id</text>
+
+  <!-- ── Path 3: students.id → payments.student_id ── -->
+  <path d="M 110,482 C 110,516 125,516 125,550"
+        fill="none" stroke="#334155" stroke-width="1.5"
+        marker-start="url(#one)" marker-end="url(#many)"/>
+
+  <!-- ── Path 4: students.id → renewals.student_id ── -->
+  <path d="M 155,482 C 155,516 360,516 360,550"
+        fill="none" stroke="#334155" stroke-width="1.5"
+        marker-start="url(#one)" marker-end="url(#many)"/>
+
+  <!-- ── Path 5: students.id → satisfaction.student_id ── -->
+  <path d="M 210,482 C 210,516 595,516 595,550"
+        fill="none" stroke="#334155" stroke-width="1.5"
+        marker-start="url(#one)" marker-end="url(#many)"/>
+
+  <!-- Label for paths 3,4,5 at the students bottom -->
+  <text x="155" y="510" font-family="JetBrains Mono,monospace" font-size="10" fill="#475569" text-anchor="middle">student_id</text>
+</svg>
+
+<!-- ═══════════════ TEACHERS ═══════════════ -->
+<div class="tbl tbl-purple" style="left:445px;top:30px">
+  <div class="th">
+    <div class="th-name">teachers</div>
+    <div class="th-desc">педагоги</div>
+  </div>
+  <div class="fd pk"><span class="fd-icon">🔑</span><span class="fd-name">id</span><span class="fd-type">int</span></div>
+  <div class="fd"><span class="fd-icon">·</span><span class="fd-name">name</span><span class="fd-type">str</span></div>
+  <div class="fd"><span class="fd-icon">·</span><span class="fd-name">subject</span><span class="fd-type">str</span></div>
+</div>
+
+<!-- ═══════════════ STUDENTS ═══════════════ -->
+<div class="tbl tbl-blue" style="left:50px;top:190px">
+  <div class="th">
+    <div class="th-name">students</div>
+    <div class="th-desc">ученики · 997 записей</div>
+  </div>
+  <div class="fd pk"><span class="fd-icon">🔑</span><span class="fd-name">id</span><span class="fd-type">int</span></div>
+  <div class="fd"><span class="fd-icon">·</span><span class="fd-name">last_name</span><span class="fd-type">str</span></div>
+  <div class="fd"><span class="fd-icon">·</span><span class="fd-name">first_name</span><span class="fd-type">str</span></div>
+  <div class="fd"><span class="fd-icon">·</span><span class="fd-name">patronymic</span><span class="fd-type">str</span></div>
+  <div class="fd"><span class="fd-icon">·</span><span class="fd-name">class</span><span class="fd-type">str</span></div>
+  <div class="fd"><span class="fd-icon">·</span><span class="fd-name">grade_level</span><span class="fd-type">int</span></div>
+  <div class="fd"><span class="fd-icon">·</span><span class="fd-name">tariff</span><span class="fd-type">str</span></div>
+  <div class="fd"><span class="fd-icon">·</span><span class="fd-name">start_date</span><span class="fd-type">date</span></div>
+  <div class="fd"><span class="fd-icon">·</span><span class="fd-name">status</span><span class="fd-type">str</span></div>
+  <div class="fd fk"><span class="fd-icon">→</span><span class="fd-name">homeroom_teacher_id</span><span class="fd-type">int</span></div>
+</div>
+
+<!-- ═══════════════ COURSES ═══════════════ -->
+<div class="tbl tbl-green" style="left:790px;top:190px">
+  <div class="th">
+    <div class="th-name">courses</div>
+    <div class="th-desc">курсы</div>
+  </div>
+  <div class="fd pk"><span class="fd-icon">🔑</span><span class="fd-name">id</span><span class="fd-type">int</span></div>
+  <div class="fd"><span class="fd-icon">·</span><span class="fd-name">name</span><span class="fd-type">str</span></div>
+  <div class="fd fk"><span class="fd-icon">→</span><span class="fd-name">teacher_id</span><span class="fd-type">int</span></div>
+  <div class="fd"><span class="fd-icon">·</span><span class="fd-name">grade_level</span><span class="fd-type">int</span></div>
+  <div class="fd"><span class="fd-icon">·</span><span class="fd-name">price_monthly</span><span class="fd-type">num</span></div>
+</div>
+
+<!-- ═══════════════ PAYMENTS ═══════════════ -->
+<div class="tbl tbl-amber" style="left:20px;top:550px">
+  <div class="th">
+    <div class="th-name">payments</div>
+    <div class="th-desc">платежи · 8 489 записей</div>
+  </div>
+  <div class="fd pk"><span class="fd-icon">🔑</span><span class="fd-name">id</span><span class="fd-type">int</span></div>
+  <div class="fd fk"><span class="fd-icon">→</span><span class="fd-name">student_id</span><span class="fd-type">int</span></div>
+  <div class="fd"><span class="fd-icon">·</span><span class="fd-name">month</span><span class="fd-type">date</span></div>
+  <div class="fd"><span class="fd-icon">·</span><span class="fd-name">amount</span><span class="fd-type">num</span></div>
+  <div class="fd"><span class="fd-icon">·</span><span class="fd-name">due_date</span><span class="fd-type">date</span></div>
+  <div class="fd"><span class="fd-icon">·</span><span class="fd-name">paid_date</span><span class="fd-type">date</span></div>
+  <div class="fd"><span class="fd-icon">·</span><span class="fd-name">status</span><span class="fd-type">str</span></div>
+  <div class="fd"><span class="fd-icon">·</span><span class="fd-name">tariff</span><span class="fd-type">str</span></div>
+</div>
+
+<!-- ═══════════════ RENEWALS ═══════════════ -->
+<div class="tbl tbl-rose" style="left:260px;top:550px">
+  <div class="th">
+    <div class="th-name">renewals</div>
+    <div class="th-desc">продления · 997 записей</div>
+  </div>
+  <div class="fd pk"><span class="fd-icon">🔑</span><span class="fd-name">id</span><span class="fd-type">int</span></div>
+  <div class="fd fk"><span class="fd-icon">→</span><span class="fd-name">student_id</span><span class="fd-type">int</span></div>
+  <div class="fd"><span class="fd-icon">·</span><span class="fd-name">current_year</span><span class="fd-type">int</span></div>
+  <div class="fd"><span class="fd-icon">·</span><span class="fd-name">renewal_status</span><span class="fd-type">str</span></div>
+  <div class="fd"><span class="fd-icon">·</span><span class="fd-name">renewal_date</span><span class="fd-type">date</span></div>
+  <div class="fd"><span class="fd-icon">·</span><span class="fd-name">next_year_tariff</span><span class="fd-type">str</span></div>
+  <div class="fd"><span class="fd-icon">·</span><span class="fd-name">comment</span><span class="fd-type">str</span></div>
+</div>
+
+<!-- ═══════════════ SATISFACTION ═══════════════ -->
+<div class="tbl tbl-teal" style="left:500px;top:550px">
+  <div class="th">
+    <div class="th-name">satisfaction</div>
+    <div class="th-desc">удовлетворённость</div>
+  </div>
+  <div class="fd pk"><span class="fd-icon">🔑</span><span class="fd-name">id</span><span class="fd-type">int</span></div>
+  <div class="fd fk"><span class="fd-icon">→</span><span class="fd-name">student_id</span><span class="fd-type">int</span></div>
+  <div class="fd"><span class="fd-icon">·</span><span class="fd-name">score</span><span class="fd-type">int</span></div>
+  <div class="fd"><span class="fd-icon">·</span><span class="fd-name">comment</span><span class="fd-type">str</span></div>
+  <div class="fd"><span class="fd-icon">·</span><span class="fd-name">survey_date</span><span class="fd-type">date</span></div>
+</div>
+
+<!-- ── LEGEND ── -->
+<div class="legend" style="right:0;bottom:0">
+  <div style="font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:4px">Обозначения</div>
+  <div class="legend-row">
+    <span style="font-size:12px">🔑</span>
+    <span>Primary Key</span>
+  </div>
+  <div class="legend-row">
+    <span style="font-size:12px;color:#94a3b8">→</span>
+    <span>Foreign Key</span>
+  </div>
+  <div class="legend-row">
+    <div style="display:flex;align-items:center;gap:4px">
+      <div style="width:8px;height:8px;border-radius:50%;border:1.5px solid #475569"></div>
+      <div style="width:22px;height:1.5px;background:#475569"></div>
+      <div style="font-size:11px;color:#475569">▶</div>
+    </div>
+    <span>1 : N (один ко многим)</span>
+  </div>
+  <div class="legend-row" style="margin-top:6px;padding-top:6px;border-top:1px solid #1c1e2a">
+    <span style="color:#475569;font-family:'JetBrains Mono',monospace;font-size:10px">str · int · date · num</span>
+  </div>
+</div>
+
+</div><!-- /canvas -->
+
+</body>
+</html>
